@@ -15,3 +15,10 @@
 ## external svg via img
 
 ![figure](./test-figure.svg)
+
+## picture with two sources
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./test-figure-dark.svg">
+  <img src="./test-figure.svg" alt="figure">
+</picture>
