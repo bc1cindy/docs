@@ -67,3 +67,90 @@ html:is(.coal, .navy, .ayu) .mdbook-graphviz-output [fill="black"] {
 html:is(.coal, .navy, .ayu) .mdbook-graphviz-output text:not([fill]) {
     fill: #b7b7b7;
 }
+    fill: #b7b7b7;
+}
+
+/* Hand-authored figures carry their series colours inline, the way the mermaid
+   classDefs do, so one svg serves both themes; only the ink and the rules swap.
+   An svg with a viewBox but no width has no intrinsic size, so the width is
+   stated rather than left to the browser default. */
+.chart {
+    overflow-x: auto;
+    margin: 1rem 0;
+    --ch-ink: #1a1a1a;
+    --ch-muted: #5c5c5c;
+    --ch-axis: #9a9a9a;
+}
+
+html:is(.coal, .navy, .ayu) .chart {
+    --ch-ink: #e8e8e8;
+    --ch-muted: #a5a5a5;
+    --ch-axis: #6f7780;
+}
+
+.chart svg {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+}
+
+/* Type and line classes for the hand-authored figure. The rules live here
+   rather than inside the svg: GitHub's markdown sanitizer strips style
+   elements from inline svg, leaking their text, while mdbook serves this
+   file, where the custom properties resolve and the fallbacks never fire. */
+.chart .lt {
+    font: 10px ui-sans-serif, system-ui, sans-serif;
+    fill: var(--ch-muted, #5c5c5c);
+}
+
+.chart .ln {
+    font: 600 10px ui-sans-serif, system-ui, sans-serif;
+    fill: var(--ch-ink, #1a1a1a);
+}
+
+.chart .ll {
+    font: 11px ui-sans-serif, system-ui, sans-serif;
+    fill: var(--ch-ink, #1a1a1a);
+}
+
+.chart .lb {
+    font: 600 12.5px ui-sans-serif, system-ui, sans-serif;
+    fill: var(--ch-ink, #1a1a1a);
+}
+
+.chart .lq {
+    font: 600 11.5px ui-sans-serif, system-ui, sans-serif;
+    fill: var(--ch-ink, #1a1a1a);
+}
+
+.chart .num {
+    font: 600 8px ui-sans-serif, system-ui, sans-serif;
+    fill: #fff;
+}
+
+.chart .w {
+    stroke: var(--ch-axis, #9a9a9a);
+    stroke-width: 1;
+    fill: none;
+    opacity: 0.24;
+}
+
+.chart .wf {
+    stroke: #4a6f9e;
+    stroke-width: 1.3;
+    fill: none;
+}
+
+.chart .wc {
+    stroke: #d18f3e;
+    stroke-width: 1.3;
+    fill: none;
+}
+
+.chart .o {
+    fill: none;
+    stroke: var(--ch-axis, #9a9a9a);
+    stroke-width: 1;
+    opacity: 0.36;
+}
