@@ -6,8 +6,8 @@ headings become the parts of SUMMARY.md and its entries the chapters,
 without their descriptions, so an entry must name a chapter, by a path
 relative to docs/, and every chapter must have an entry. The README is
 the introduction, and the index, with its descriptions, is the contents
-page. Frontmatter is dropped, as mdbook would render it as text. The
-bundle's other files are copied as they are.
+page. Frontmatter is checked and then dropped, as mdbook would render it
+as text. The bundle's other files are copied as they are.
 
     python3 book.py ROOT
 """
@@ -15,19 +15,57 @@ import argparse
 import posixpath
 import re
 import shutil
+from datetime import datetime
 from pathlib import Path
 
-FRONTMATTER = re.compile(r"\A---\n.*?\n---[ \t]*(?:\n+|\Z)", re.DOTALL)
+import yaml
+
+FRONTMATTER = re.compile(r"\A---\n(.*?)\n---[ \t]*(?:\n+|\Z)", re.DOTALL)
 ENTRY = re.compile(r"\* \[([^\]]+)\]\(([^)\s]+)\)(?: - .*)?")
 DOCS = "docs"
 # As set in book.toml.
 SRC = "src"
 CONTENTS = "contents.md"
 GENERATED = ("README.md", "SUMMARY.md", CONTENTS)
+STATUSES = ("draft", "stable", "deprecated")
+RESERVED = ("index.md", "log.md")
 
 
 def strip_frontmatter(text):
     return FRONTMATTER.sub("", text, count=1)
+
+
+def frontmatter(text):
+    m = FRONTMATTER.match(text)
+    fields = yaml.safe_load(m.group(1)) if m else None
+    return fields if isinstance(fields, dict) else {}
+
+
+def check(name, text):
+    """A page must have a type and a status, and a draft the instant from
+    which it is stale, where OKF makes both optional. Whether that instant
+    has passed is not checked, so that a build does not depend on when it
+    runs."""
+    try:
+        fields = frontmatter(text)
+    except (yaml.YAMLError, ValueError) as e:
+        raise ValueError(f"{name}: {e}") from e
+    if not fields.get("type"):
+        raise ValueError(f"{name}: no type")
+    status = fields.get("status")
+    if status not in STATUSES:
+        raise ValueError(f"{name}: status {status!r} is not one of {STATUSES}")
+    if status == "draft":
+        stale_after = fields.get("stale_after")
+        if isinstance(stale_after, str):
+            try:
+                stale_after = datetime.fromisoformat(stale_after)
+            except ValueError:
+                stale_after = None
+        if not isinstance(stale_after, datetime) or stale_after.tzinfo is None:
+            raise ValueError(
+                f"{name}: a draft needs stale_after, an ISO 8601 instant with an offset"
+            )
 
 
 def summary(index, pages):
@@ -64,14 +102,15 @@ def contents(index):
 def assemble(root):
     docs, out = root / DOCS, root / SRC
     index = (docs / "index.md").read_text()
-    pages = {
-        page.relative_to(docs).as_posix(): page.read_text()
-        for page in sorted(docs.rglob("*.md"))
-    }
+    pages = {}
+    for page in sorted(docs.rglob("*.md")):
+        if page.name not in RESERVED:
+            name = page.relative_to(docs).as_posix()
+            pages[name] = page.read_text()
+            check(name, pages[name])
     # docs/README.md directs readers of the repository to the book; as a
     # chapter it would overwrite the introduction.
-    for name in ("index.md", "README.md"):
-        pages.pop(name, None)
+    pages.pop("README.md", None)
     # Compared without case, as a case-insensitive filesystem would let a
     # chapter named like a generated page replace it.
     reserved = {name.casefold() for name in GENERATED}

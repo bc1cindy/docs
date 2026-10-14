@@ -12,7 +12,7 @@
           mdbook-graphviz
           mdbook-katex
           graphviz
-          python3
+          (python3.withPackages (ps: [ ps.pyyaml ]))
         ]);
 
         buildPhase = ''
@@ -33,7 +33,7 @@
         inherit site;
         book =
           pkgs.runCommand "book-tests"
-            { nativeBuildInputs = [ (pkgs.python3.withPackages (ps: [ ps.pytest ])) ]; }
+            { nativeBuildInputs = [ (pkgs.python3.withPackages (ps: [ ps.pytest ps.pyyaml ])) ]; }
             ''
               cd ${../contrib}
               pytest -p no:cacheprovider

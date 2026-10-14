@@ -9,7 +9,7 @@
           mdbook-graphviz
           mdbook-katex
           graphviz
-          (python3.withPackages (ps: [ ps.pytest ]))
+          (python3.withPackages (ps: [ ps.pytest ps.pyyaml ]))
         ]);
       };
     };
