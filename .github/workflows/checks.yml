@@ -2,6 +2,7 @@ name: Flake checks
 on:
   pull_request:
 permissions:
+  actions: read # lets hestia detect evicted cache entries upfront
   contents: read
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -13,5 +14,8 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
-      - uses: DeterminateSystems/magic-nix-cache-action@84c0677f58dcedf3b91f8223ce36a9ea5b3c84b7 # v15
+      - uses: Mic92/hestia@dfed9ced335d28978ba74e513939a10db1f71025 # v3.1.0
+        with:
+          # Do not upload paths that cache.nixos.org already serves.
+          upstream-cache-filter: true
       - run: nix flake check --no-update-lock-file
